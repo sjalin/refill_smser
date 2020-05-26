@@ -1,0 +1,5 @@
+username_netgear = 'a'
+password_netgear = 'b'
+username_telia = 'c.d@e.se'
+password_telia = 'f'
+phone_nr = '1'

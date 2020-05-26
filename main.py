@@ -2,40 +2,46 @@ import time
 import re
 import selenium.webdriver
 
+from credentials import *
+
 driver_netgear = selenium.webdriver.Chrome('./chromedriver')
 driver_telia = selenium.webdriver.Chrome('./chromedriver')
 
-username_netgear = 'xxxx'
-password_netgear = 'xxx'
-username_telia = 'xx'
-password_telia = 'x'
-
-
 def main():
-    try:
-        start_telia()
-        start_netgear()
-        while 1:
-         #   amount = poll_telia()
-            amount = -1
-            if amount == -1:
-                send_sms()
-                driver_netgear.quit()
-                time.sleep(180)
-            elif amount < 13:
-                send_sms()
-                time.sleep(60)
-            else:
-                time.sleep(60)
-    except Exception as e:
-        driver_netgear = selenium.webdriver.Chrome('./chromedriver')
-        start_netgear()
-        send_sms('0705385996', str(e.message) if hasattr(e, 'message') else str(e))
+    exception_sent = False
+    while 1:
+        try:
+            start_telia()
+            start_netgear()
+            while 1:
+                amount = poll_telia()
+                if amount == -1:
+                    send_sms()
+                    time.sleep(180)
+                elif amount < 13:
+                    send_sms()
+                    time.sleep(60)
+                else:
+                    time.sleep(60)
+                if exception_sent == True:
+                    send_sms('0705385996', 'Up and running again!!! Woooot!')
+
+
+        except Exception as e:
+            if exception_sent:
+                global driver_netgear
+                driver_netgear = selenium.webdriver.Chrome('./chromedriver')
+                start_netgear()
+                send_sms('0705385996', str(e.message) if hasattr(e, 'message') else str(e))
+                exception_sent = True
 
 
 
 def start_netgear():
     global driver_netgear
+    global username_netgear
+    global password_netgear
+
     driver_netgear.get('http://192.168.65.1')
     time.sleep(1)
     element = driver_netgear.find_element_by_id('user_name')
@@ -61,6 +67,8 @@ def send_sms(number: str = '4466', sms: str = 'fortsätt'):
 
 def start_telia():
     global driver_telia
+    global username_telia
+    global password_telia
 
     amount = 0
 
@@ -79,42 +87,23 @@ def start_telia():
 
 def poll_telia():
     global driver_telia
+    amount = -1
 
     try:
-        element = driver_telia.find_element_by_id('97d3cdac-97cf-43e1-9144-207cd15696ad')
+        print('test sfind')
+        element = driver_telia.find_element_by_css_selector('mybd-count-to')
         # element = driver_telia.find_element_by_class_name('mybd-number-panel__number text-number-large')
         print(element.text)
     except selenium.common.exceptions.NoSuchElementException:
-        return -1
-    #     < div
-    #
-    #     class ="mybd-number-panel__number text-number-large" >
-    #
-    #     < mybd - count - to
-    #     value = "5.46"
-    #     aria - label = "5.46" > 5.46 < / mybd - count - to >
-    #
-    # < / div >
-    """    < mybd - count - to
-        value = "5.94"
-        aria - label = "5.94" > 5.94 < / mybd - count - to >
-        """
-    """    < mybd - count - to
-        value = "6"
-        aria - label = "5.94" > 5.94 < / mybd - count - to >
-        """
+        print('weeeeeeeeeeeeee')
+        return amount
+    driver_telia.text
+
     element = driver_telia.find_element_by_id('mybd-count-to')
     time.sleep(5)
 
+    print(f'ammount {amount}')
     return amount
 
 if __name__ == "__main__":
     main()
-
-getGB = re.compile(r'" > (\d).(\d\d) < / mybd - count - to >')
-test = """    < mybd - count - to
-    value = "5.94"
-    aria - label = "5.94" > 5.94 < / mybd - count - to >
-    """
-gb = getGB.search(test)
-print(gb.groups())
