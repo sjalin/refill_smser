@@ -2,30 +2,40 @@ import time
 import re
 import selenium.webdriver
 
-driver_netgear = selenium.webdriver.Chrome('/home/sebbe/projects/super_smser/chromedriver')
-#driver_telia = selenium.webdriver.Chrome('/home/sebbe/projects/super_smser/chromedriver')
+driver_netgear = selenium.webdriver.Chrome('./chromedriver')
+driver_telia = selenium.webdriver.Chrome('./chromedriver')
+
+username_netgear = 'xxxx'
+password_netgear = 'xxx'
+username_telia = 'xx'
+password_telia = 'x'
 
 
 def main():
-    #start_telia()
-    start_netgear()
-    while 1:
-     #   amount = poll_telia()
-        amount = -1
-        if amount == -1:
-            send_sms()
-            time.sleep(180)
-        elif amount < 13:
-            send_sms()
-            time.sleep(60)
-        else:
-            time.sleep(60)
+    try:
+        start_telia()
+        start_netgear()
+        while 1:
+         #   amount = poll_telia()
+            amount = -1
+            if amount == -1:
+                send_sms()
+                driver_netgear.quit()
+                time.sleep(180)
+            elif amount < 13:
+                send_sms()
+                time.sleep(60)
+            else:
+                time.sleep(60)
+    except Exception as e:
+        driver_netgear = selenium.webdriver.Chrome('./chromedriver')
+        start_netgear()
+        send_sms('0705385996', str(e.message) if hasattr(e, 'message') else str(e))
+
 
 
 def start_netgear():
     global driver_netgear
-    username_netgear = ''
-    password_netgear = ''
     driver_netgear.get('http://192.168.65.1')
     time.sleep(1)
     element = driver_netgear.find_element_by_id('user_name')
@@ -52,8 +62,6 @@ def send_sms(number: str = '4466', sms: str = 'fortsätt'):
 def start_telia():
     global driver_telia
 
-    username_telia = ''
-    password_telia = ''
     amount = 0
 
     driver_telia.get('https://www.telia.se/foretag/mybusiness/login')
