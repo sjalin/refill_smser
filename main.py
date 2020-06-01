@@ -1,6 +1,7 @@
 import time
 import re
 import selenium.webdriver
+import datetime
 
 from credentials import *
 
@@ -11,28 +12,37 @@ def main():
     exception_sent = False
     while 1:
         try:
+            print('Startup')
             start_telia()
             start_netgear()
             while 1:
+                sleeptime = 60
+                print(f'Start seq. @ time: {datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")}')
+                print('Get data left...')
                 amount = poll_telia()
-                if amount == -1:
+                print(f'{amount} Gb data left')
+                if amount < 0:
+                    print(f'{amount} is to damn small')
                     send_sms()
-                    time.sleep(180)
+                    sleeptime = 180
                 elif amount < 13:
+                    print(f'Running out ({amount}) have to refill')
                     send_sms()
-                    time.sleep(60)
                 else:
-                    time.sleep(60)
+                    print('It\'s ok')
                 if exception_sent == True:
-                    send_sms('0705385996', 'Up and running again!!! Woooot!')
+                    send_sms(phone_nr, 'Up and running again!!! Woooot!')
+                print(f'Will start again in {sleeptime} s')
+                time.sleep(sleeptime)
 
 
         except Exception as e:
             if exception_sent:
+                print(e)
                 global driver_netgear
                 driver_netgear = selenium.webdriver.Chrome('./chromedriver')
                 start_netgear()
-                send_sms('0705385996', str(e.message) if hasattr(e, 'message') else str(e))
+                send_sms(phone_nr, str(e.message) if hasattr(e, 'message') else str(e))
                 exception_sent = True
 
 
@@ -63,7 +73,7 @@ def send_sms(number: str = '4466', sms: str = 'fortsätt'):
     element = driver_netgear.find_element_by_id('sms_send_message_field')
     element.send_keys(sms)
     element.send_keys(selenium.webdriver.common.keys.Keys.RETURN)
-    time.sleep(1)
+    print('Sms sent')
 
 def start_telia():
     global driver_telia
@@ -93,17 +103,10 @@ def poll_telia():
         print('test sfind')
         element = driver_telia.find_element_by_css_selector('mybd-count-to')
         # element = driver_telia.find_element_by_class_name('mybd-number-panel__number text-number-large')
-        print(element.text)
     except selenium.common.exceptions.NoSuchElementException:
         print('weeeeeeeeeeeeee')
         return amount
-    driver_telia.text
-
-    element = driver_telia.find_element_by_id('mybd-count-to')
-    time.sleep(5)
-
-    print(f'ammount {amount}')
-    return amount
+    return float(element.text)
 
 if __name__ == "__main__":
     main()
