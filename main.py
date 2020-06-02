@@ -5,8 +5,9 @@ import datetime
 
 from credentials import *
 
-driver_netgear = selenium.webdriver.Chrome('./chromedriver')
-driver_telia = selenium.webdriver.Chrome('./chromedriver')
+#driver_netgear = selenium.webdriver.Chrome('./chromedriver')
+driver_netgear = selenium.webdriver.Chrome()
+driver_telia = selenium.webdriver.Chrome()
 
 def main():
     exception_sent = False
@@ -15,6 +16,7 @@ def main():
             print('Startup')
             start_telia()
             start_netgear()
+            print('Startup done')
             while 1:
                 sleeptime = 60
                 print(f'Start seq. @ time: {datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")}')
@@ -25,26 +27,27 @@ def main():
                     print(f'{amount} is to damn small')
                     send_sms()
                     sleeptime = 180
-                elif amount < 13:
+                elif amount < 19.9:
                     print(f'Running out ({amount}) have to refill')
                     send_sms()
                 else:
                     print('It\'s ok')
                 if exception_sent == True:
                     send_sms(phone_nr, 'Up and running again!!! Woooot!')
+                    exception_sent = False
                 print(f'Will start again in {sleeptime} s')
                 time.sleep(sleeptime)
 
 
         except Exception as e:
-            if exception_sent:
+            if not exception_sent:
                 print(e)
                 global driver_netgear
                 driver_netgear = selenium.webdriver.Chrome('./chromedriver')
                 start_netgear()
                 send_sms(phone_nr, str(e.message) if hasattr(e, 'message') else str(e))
                 exception_sent = True
-
+            time.sleep(60)
 
 
 def start_netgear():
@@ -98,13 +101,14 @@ def start_telia():
 def poll_telia():
     global driver_telia
     amount = -1
+    
+    driver_telia.refresh()
 
     try:
-        print('test sfind')
+        print('Finding web element')
         element = driver_telia.find_element_by_css_selector('mybd-count-to')
-        # element = driver_telia.find_element_by_class_name('mybd-number-panel__number text-number-large')
     except selenium.common.exceptions.NoSuchElementException:
-        print('weeeeeeeeeeeeee')
+        print('Did not find web element')
         return amount
     return float(element.text)
 
