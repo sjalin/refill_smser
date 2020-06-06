@@ -4,13 +4,24 @@ import selenium.webdriver
 import datetime
 
 from credentials import *
+from selenium.webdriver.chrome.options import Options
+
+co = Options()
+driver_netgear = None
+driver_telia = None
 
 #driver_netgear = selenium.webdriver.Chrome('./chromedriver')
-driver_netgear = selenium.webdriver.Chrome()
-driver_telia = selenium.webdriver.Chrome()
 
 def main():
     exception_sent = False
+    global oc
+    global driver_netgear
+    global driver_telia
+
+    co.add_argument('--headless')
+    driver_netgear = selenium.webdriver.Chrome(options=co)
+    driver_telia = selenium.webdriver.Chrome(options=co)
+    
     while 1:
         try:
             print('Startup')
@@ -18,7 +29,7 @@ def main():
             start_netgear()
             print('Startup done')
             while 1:
-                sleeptime = 60
+                sleeptime = 180
                 print(f'Start seq. @ time: {datetime.datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")}')
                 print('Get data left...')
                 amount = poll_telia()
@@ -26,10 +37,12 @@ def main():
                 if amount < 0:
                     print(f'{amount} is to damn small')
                     send_sms()
-                    sleeptime = 180
-                elif amount < 19.9:
+                    sleeptime = 77
+                elif amount < 19.77:
                     print(f'Running out ({amount}) have to refill')
                     send_sms()
+                    if amount < 5:
+                        sleeptime = 60
                 else:
                     print('It\'s ok')
                 if exception_sent == True:
@@ -42,7 +55,6 @@ def main():
         except Exception as e:
             if not exception_sent:
                 print(e)
-                global driver_netgear
                 driver_netgear = selenium.webdriver.Chrome('./chromedriver')
                 start_netgear()
                 send_sms(phone_nr, str(e.message) if hasattr(e, 'message') else str(e))
@@ -51,19 +63,22 @@ def main():
 
 
 def start_netgear():
+    print('Netgear start')
     global driver_netgear
     global username_netgear
     global password_netgear
 
     driver_netgear.get('http://192.168.65.1')
-    time.sleep(1)
+    print('username')
     element = driver_netgear.find_element_by_id('user_name')
     element.send_keys(username_netgear)
-    time.sleep(1)
+    print('password')
     element = driver_netgear.find_element_by_id('session_password')
     element.send_keys(password_netgear)
+    print('logging in')
     element.send_keys(selenium.webdriver.common.keys.Keys.RETURN)
-    time.sleep(1)
+    print('Done')
+
 
 def send_sms(number: str = '4466', sms: str = 'fortsätt'):
     global driver_netgear
@@ -79,6 +94,7 @@ def send_sms(number: str = '4466', sms: str = 'fortsätt'):
     print('Sms sent')
 
 def start_telia():
+    print('Telia start')
     global driver_telia
     global username_telia
     global password_telia
@@ -87,23 +103,30 @@ def start_telia():
 
     driver_telia.get('https://www.telia.se/foretag/mybusiness/login')
     driver_telia.refresh()
-    time.sleep(4)
+    #time.sleep(4)
+    print('accpting cookies')
     element = driver_telia.find_element_by_id('cookie-preferences-accept-button')
     element.click()
-    time.sleep(1)
+    #time.sleep(1)
+    print('username')
     element = driver_telia.find_element_by_id('username')
     element.send_keys(username_telia)
+    print('password')
     element = driver_telia.find_element_by_id('login-simple-password')
     element.send_keys(password_telia)
+    print('logging in')
     element.send_keys(selenium.webdriver.common.keys.Keys.RETURN)
-    time.sleep(4)
+    #time.sleep(4)
+    print('Done')
 
 def poll_telia():
     global driver_telia
     amount = -1
     
+    print('reflesh telia and wait 5s')
     driver_telia.refresh()
-
+    time.sleep(5)    
+    
     try:
         print('Finding web element')
         element = driver_telia.find_element_by_css_selector('mybd-count-to')
