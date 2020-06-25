@@ -14,13 +14,13 @@ driver_telia = None
 
 def main():
     exception_sent = False
-    global oc
+    global co
     global driver_netgear
     global driver_telia
 
     co.add_argument('--headless')
-    driver_netgear = selenium.webdriver.Chrome(options=co)
-    driver_telia = selenium.webdriver.Chrome(options=co)
+    driver_netgear = selenium.webdriver.Chrome('./chromedriver', options=co)
+    driver_telia = selenium.webdriver.Chrome('./chromedriver', options=co)
     
     while 1:
         try:
@@ -55,7 +55,7 @@ def main():
         except Exception as e:
             if not exception_sent:
                 print(e)
-                driver_netgear = selenium.webdriver.Chrome('./chromedriver')
+                driver_netgear = selenium.webdriver.Chrome('./chromedriver', options=co)
                 start_netgear()
                 send_sms(phone_nr, str(e.message) if hasattr(e, 'message') else str(e))
                 exception_sent = True
@@ -72,6 +72,7 @@ def start_netgear():
     print('username')
     element = driver_netgear.find_element_by_id('user_name')
     element.send_keys(username_netgear)
+    time.sleep(20)
     print('password')
     element = driver_netgear.find_element_by_id('session_password')
     element.send_keys(password_netgear)
