@@ -74,10 +74,10 @@ def start_netgear():
     global password_netgear
 
     driver_netgear.get('http://192.168.65.1')
+    time.sleep(20)
     print('username')
     element = driver_netgear.find_element_by_id('user_name')
     element.send_keys(username_netgear)
-    time.sleep(20)
     print('password')
     element = driver_netgear.find_element_by_id('session_password')
     element.send_keys(password_netgear)
